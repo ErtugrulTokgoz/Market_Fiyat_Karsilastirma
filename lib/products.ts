@@ -1,0 +1,23 @@
+// Önceden tanımlanmış ürün listesi - kullanıcının ana ekranda seçeceği ürünler
+export const PRODUCT_CATALOG = [
+  { id: 'sut', name: 'Süt (1L)', icon: '🥛', query: 'süt', category: 'Süt Ürünleri' },
+  { id: 'ekmek', name: 'Ekmek', icon: '🍞', query: 'ekmek', category: 'Fırın' },
+  { id: 'yumurta', name: 'Yumurta (10\'lu)', icon: '🥚', query: 'yumurta', category: 'Kahvaltılık' },
+  { id: 'tereyagi', name: 'Tereyağı (250g)', icon: '🧈', query: 'tereyağı 250g', category: 'Süt Ürünleri' },
+  { id: 'peynir', name: 'Beyaz Peynir', icon: '🧀', query: 'beyaz peynir', category: 'Süt Ürünleri' },
+  { id: 'zeytin', name: 'Zeytin', icon: '🫒', query: 'zeytin', category: 'Kahvaltılık' },
+  { id: 'tavuk', name: 'Tavuk Göğsü (kg)', icon: '🍗', query: 'tavuk göğsü', category: 'Et & Şarküteri' },
+  { id: 'kiyma', name: 'Dana Kıyma (kg)', icon: '🥩', query: 'dana kıyma', category: 'Et & Şarküteri' },
+  { id: 'makarna', name: 'Makarna (500g)', icon: '🍝', query: 'makarna 500g', category: 'Bakliyat & Tahıl' },
+  { id: 'pirinc', name: 'Pirinç (1kg)', icon: '🍚', query: 'pirinç 1kg', category: 'Bakliyat & Tahıl' },
+  { id: 'domates', name: 'Domates (kg)', icon: '🍅', query: 'domates', category: 'Meyve & Sebze' },
+  { id: 'elma', name: 'Elma (kg)', icon: '🍎', query: 'elma', category: 'Meyve & Sebze' },
+  { id: 'seker', name: 'Şeker (1kg)', icon: '🍬', query: 'şeker 1kg', category: 'Temel Gıda' },
+  { id: 'tuz', name: 'Tuz (750g)', icon: '🧂', query: 'tuz', category: 'Temel Gıda' },
+  { id: 'yemeklik-yag', name: 'Ayçiçek Yağı (1L)', icon: '🫙', query: 'ayçiçek yağı 1 litre', category: 'Temel Gıda' },
+  { id: 'cay', name: 'Çay (500g)', icon: '🍵', query: 'çay 500g', category: 'İçecek' },
+  { id: 'kahve', name: 'Nescafe (200g)', icon: '☕', query: 'nescafe 200g', category: 'İçecek' },
+  { id: 'su', name: 'Su (1,5L)', icon: '💧', query: 'su 1.5 litre', category: 'İçecek' },
+  { id: 'deterjan', name: 'Çamaşır Deterjanı', icon: '🧺', query: 'çamaşır deterjanı', category: 'Temizlik' },
+  { id: 'sampuan', name: 'Şampuan', icon: '🧴', query: 'şampuan', category: 'Kişisel Bakım' },
+];
