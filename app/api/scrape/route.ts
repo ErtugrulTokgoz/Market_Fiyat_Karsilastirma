@@ -12,8 +12,9 @@ export async function GET(request: Request) {
     let searchKeyword = 'süt';
     try {
       const parsedUrl = new URL(targetUrl);
-      if (parsedUrl.searchParams.has('k')) {
-        searchKeyword = parsedUrl.searchParams.get('k');
+      const kParam = parsedUrl.searchParams.get('k');
+      if (kParam) {
+        searchKeyword = kParam;
       }
     } catch (e) {}
 
