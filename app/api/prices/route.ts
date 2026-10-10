@@ -246,11 +246,17 @@ async function scrapeTarimKredi(query: string): Promise<ProductResult | null> {
     let priceText = '';
     let productImage = '';
 
-    // Temel ürün listeleme class'ları
-    $('[class*="product-item"], [class*="ProductCard"]').each((_, el) => {
+    // Yeni tespit edilen HTML yapılarına göre döngü
+    $('.product-inner').each((_, el) => {
       if (productName) return false;
-      const title = $(el).find('[class*="name"], [class*="title"]').text().trim();
-      const price = $(el).find('[class*="price"]').first().text().trim();
+      
+      // Başlık veya link etiketi içindeki ürün ismini al ve fazladan boşlukları temizle
+      const title = $(el).find('a, h1, h2, h3, h4, h5, h6, [class*="name"], [class*="title"]').first().text().replace(/\s\s+/g, ' ').trim();
+      
+      // Fiyat elementinden metni alıp \n ve fazladan boşlukları yok ederek düzleştir
+      const rawPrice = $(el).find('.ss_urun52').text();
+      const price = rawPrice.replace(/[\n\r\t]/g, '').replace(/\s+/g, '').replace('TL', ' TL').trim();
+      
       const img = $(el).find('img').first().attr('src') || '';
 
       if (title && price) {
