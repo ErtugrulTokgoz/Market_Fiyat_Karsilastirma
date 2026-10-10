@@ -26,6 +26,7 @@ const MARKET_LOGOS: Record<string, string> = {
   bim: "BİM",
   happy: "H",
   bizim: "B",
+  tarimkredi: "TK",
 };
 
 // Ürün isimlerinden hacim/ağırlık çıkarma aracı (ml veya gram cinsine dönüştürür)

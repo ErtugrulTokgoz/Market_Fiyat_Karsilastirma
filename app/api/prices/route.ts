@@ -217,6 +217,55 @@ async function scrapeBizim(query: string): Promise<ProductResult | null> {
   }
 }
 
+// ─── Tarım Kredi ─────────────────────────────────────────────────────────────
+async function scrapeTarimKredi(query: string): Promise<ProductResult | null> {
+  try {
+    const res = await fetch(
+      `https://www.tkkoop.com.tr/arama?ara=${encodeURIComponent(query)}`,
+      { headers: BROWSER_HEADERS }
+    );
+    if (!res.ok) return null;
+    const html = await res.text();
+    const $ = cheerio.load(html);
+
+    let productName = '';
+    let priceText = '';
+    let productImage = '';
+
+    // Temel ürün listeleme class'ları
+    $('[class*="product-item"], [class*="ProductCard"]').each((_, el) => {
+      if (productName) return false;
+      const title = $(el).find('[class*="name"], [class*="title"]').text().trim();
+      const price = $(el).find('[class*="price"]').first().text().trim();
+      const img = $(el).find('img').first().attr('src') || '';
+
+      if (title && price) {
+        productName = title;
+        priceText = price;
+        productImage = img;
+      }
+    });
+
+    if (!priceText) return null;
+    const price = parseTRPrice(priceText);
+    if (price === null) return null;
+
+    return {
+      marketId: 'tarimkredi',
+      marketName: 'Tarım Kredi',
+      marketColor: '#00703C',
+      price,
+      priceText: formatPrice(price),
+      productName,
+      productImage: productImage.startsWith('http') ? productImage : `https://www.tkkoop.com.tr${productImage}`,
+      productUrl: `https://www.tkkoop.com.tr/arama?ara=${encodeURIComponent(query)}`,
+      available: true,
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
 // ─── A101 (API Fetch) ──────────────────────────────────────────────────────────
 async function scrapeA101(query: string): Promise<ProductResult | null> {
   try {
@@ -300,18 +349,19 @@ export async function GET(request: Request) {
   }
 
   // Gerçek verileri paralel çek
-  const [a101Res, sokRes, migrosRes, happyRes, bizimRes] = await Promise.allSettled([
+  const [a101Res, sokRes, migrosRes, happyRes, bizimRes, tarimRes] = await Promise.allSettled([
     scrapeA101(query),
     scrapeSOK(query),
     scrapeMigros(query),
     scrapeHappy(query),
     scrapeBizim(query),
+    scrapeTarimKredi(query),
   ]);
 
   const results: ProductResult[] = [];
 
   // Başarılı sonuçları topla
-  [a101Res, sokRes, migrosRes, happyRes, bizimRes].forEach((r) => {
+  [a101Res, sokRes, migrosRes, happyRes, bizimRes, tarimRes].forEach((r) => {
     if (r.status === 'fulfilled' && r.value?.available) {
       results.push(r.value);
     }
