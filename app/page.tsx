@@ -28,6 +28,26 @@ const MARKET_LOGOS: Record<string, string> = {
   bizim: "B",
 };
 
+// Ürün isimlerinden hacim/ağırlık çıkarma aracı (ml veya gram cinsine dönüştürür)
+function extractVolume(str: string): number | null {
+  if (!str) return null;
+  const s = str.toLowerCase();
+  
+  const lMatch = s.match(/(\d+(?:[.,]\d+)?)\s*(?:l|lt|litre)\b/);
+  if (lMatch) return parseFloat(lMatch[1].replace(',', '.')) * 1000;
+  
+  const mlMatch = s.match(/(\d+(?:[.,]\d+)?)\s*ml\b/);
+  if (mlMatch) return parseFloat(mlMatch[1].replace(',', '.'));
+  
+  const kgMatch = s.match(/(\d+(?:[.,]\d+)?)\s*(?:kg|kilo)\b/);
+  if (kgMatch) return parseFloat(kgMatch[1].replace(',', '.')) * 1000;
+  
+  const gMatch = s.match(/(\d+(?:[.,]\d+)?)\s*(?:g|gr|gram)\b/);
+  if (gMatch) return parseFloat(gMatch[1].replace(',', '.'));
+  
+  return null;
+}
+
 export default function Home() {
   const [view, setView] = useState<AppView>("products");
   const [selectedProduct, setSelectedProduct] = useState<(typeof PRODUCT_CATALOG)[0] | null>(null);
@@ -58,7 +78,19 @@ export default function Home() {
       if (!res.ok || data.error) {
         setError(data.error || "Bir hata oluştu.");
       } else {
-        setResults(data.results || []);
+        const queryVol = extractVolume(product.name) || extractVolume(product.query);
+        let finalResults = data.results || [];
+        
+        if (queryVol) {
+          finalResults = finalResults.filter((p: ProductResult) => {
+             const pVol = extractVolume(p.productName);
+             // Hacim bulunamazsa veya hedef hacimden %20'den fazla sapmıyorsa kabul et
+             if (!pVol) return true; 
+             return Math.abs(pVol - queryVol) / queryVol <= 0.20;
+          });
+        }
+        
+        setResults(finalResults);
       }
     } catch (e) {
       setError("Sunucuya bağlanılamadı. Lütfen tekrar deneyin.");
