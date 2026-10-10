@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: "Konumunuza göre yakındaki marketlerin fiyatlarını karşılaştırın ve en uygun fiyatları bulun.",
   manifest: "/manifest.json",
   icons: {
-    apple: "/apple-icon.png",
+    apple: "/icons/apple-touch-icon.png",
   },
   appleWebApp: {
     capable: true,
