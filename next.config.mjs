@@ -1,7 +1,8 @@
 import withPWAInit from '@ducanh2912/next-pwa';
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  serverExternalPackages: ['puppeteer', 'puppeteer-extra', 'puppeteer-extra-plugin-stealth'],
+};
 
 const withPWA = withPWAInit({
   dest: 'public',
