@@ -7,6 +7,19 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Yakındaki Market Fiyatları | En İyi Fiyat",
   description: "Konumunuza göre yakındaki marketlerin fiyatlarını karşılaştırın ve en uygun fiyatları bulun.",
+  manifest: "/manifest.json",
+  icons: {
+    apple: "/apple-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "FiyatKıyas",
+  },
+};
+
+export const viewport = {
+  themeColor: "#0f172a",
 };
 
 export default function RootLayout({
