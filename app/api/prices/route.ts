@@ -219,12 +219,26 @@ async function scrapeBizim(query: string): Promise<ProductResult | null> {
 
 // ─── Tarım Kredi ─────────────────────────────────────────────────────────────
 async function scrapeTarimKredi(query: string): Promise<ProductResult | null> {
+  const unavailableResult = {
+    marketId: 'tarimkredi',
+    marketName: 'Tarım Kredi',
+    marketColor: '#00703C',
+    price: 0,
+    priceText: '-',
+    productName: 'Fiyat bilgisi alınamadı',
+    productUrl: `https://www.tkkoop.com.tr/arama?ara=${encodeURIComponent(query)}`,
+    available: false,
+  };
+
   try {
     const res = await fetch(
       `https://www.tkkoop.com.tr/arama?ara=${encodeURIComponent(query)}`,
       { headers: BROWSER_HEADERS }
     );
-    if (!res.ok) return null;
+    if (!res.ok) {
+       console.error('[Tarım Kredi] HTTP Hatası:', res.status);
+       return unavailableResult;
+    }
     const html = await res.text();
     const $ = cheerio.load(html);
 
@@ -246,23 +260,24 @@ async function scrapeTarimKredi(query: string): Promise<ProductResult | null> {
       }
     });
 
-    if (!priceText) return null;
+    if (!priceText) {
+       console.error('[Tarım Kredi] Seçiciler boş döndü. HTML başı:\n', html.substring(0, 1000));
+       return unavailableResult;
+    }
     const price = parseTRPrice(priceText);
-    if (price === null) return null;
+    if (price === null) return unavailableResult;
 
     return {
-      marketId: 'tarimkredi',
-      marketName: 'Tarım Kredi',
-      marketColor: '#00703C',
+      ...unavailableResult,
       price,
       priceText: formatPrice(price),
       productName,
       productImage: productImage.startsWith('http') ? productImage : `https://www.tkkoop.com.tr${productImage}`,
-      productUrl: `https://www.tkkoop.com.tr/arama?ara=${encodeURIComponent(query)}`,
       available: true,
     };
-  } catch (e) {
-    return null;
+  } catch (e: any) {
+    console.error('[Tarım Kredi] İstek Hatası:', e.message);
+    return unavailableResult;
   }
 }
 
@@ -359,19 +374,23 @@ export async function GET(request: Request) {
   ]);
 
   const results: ProductResult[] = [];
+  const unavailable: ProductResult[] = [];
 
-  // Başarılı sonuçları topla
+  // Tüm sonuçları topla ve duruma göre array'lere dağıt
   [a101Res, sokRes, migrosRes, happyRes, bizimRes, tarimRes].forEach((r) => {
-    if (r.status === 'fulfilled' && r.value?.available) {
-      results.push(r.value);
+    if (r.status === 'fulfilled' && r.value) {
+      if (r.value.available) {
+        results.push(r.value);
+      } else {
+        unavailable.push(r.value);
+      }
     }
   });
 
   // Fiyata göre sırala
   results.sort((a, b) => a.price - b.price);
 
-  // Erişilemeyen marketleri sona ekle
-  const unavailable: ProductResult[] = [];
+  // Eski manuel BİM/Carrefour eklentilerini de yapalım
   const others = await Promise.all([
     scrapeBIM(query),
     scrapeCarrefour(query)
