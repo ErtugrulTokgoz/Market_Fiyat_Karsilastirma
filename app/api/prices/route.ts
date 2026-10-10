@@ -217,18 +217,50 @@ async function scrapeBizim(query: string): Promise<ProductResult | null> {
   }
 }
 
-// ─── A101 (bot koruması - erişilemiyor) ─────────────────────────────────────
-async function scrapeA101(_query: string): Promise<ProductResult | null> {
-  return {
-    marketId: 'a101',
-    marketName: 'A101',
-    marketColor: '#00AEEF',
-    price: 0,
-    priceText: '-',
-    productName: 'Fiyat bilgisi alınamadı',
-    productUrl: `https://www.a101.com.tr`,
-    available: false,
-  };
+// ─── A101 (API Fetch) ──────────────────────────────────────────────────────────
+async function scrapeA101(query: string): Promise<ProductResult | null> {
+  try {
+    const payload = {
+      "query": query,
+      "filter": [],
+      "sort": [],
+      "page_number": 1,
+      "row_per_page": 20,
+      "location": "VS032-SLOT"
+    };
+
+    const encodedPayload = encodeURIComponent(JSON.stringify(payload));
+    const apiUrl = `https://a101-main-prod.wawlabs.com/combined_api_v2?json_data=${encodedPayload}`;
+
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    });
+
+    if (!response.ok) return null;
+    const data = await response.json();
+    
+    if (data?.kapida?.products && data.kapida.products.length > 0) {
+      const item = data.kapida.products[0];
+      const priceNum = parseFloat(item.price);
+      return {
+        marketId: 'a101',
+        marketName: 'A101',
+        marketColor: '#00AEEF',
+        price: isNaN(priceNum) ? 0 : priceNum,
+        priceText: item.price.toString() + " ₺",
+        productName: item.title,
+        productUrl: `https://www.a101.com.tr/arama?k=${encodeURIComponent(query)}`,
+        available: true,
+      };
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
 }
 
 // ─── BİM (bot koruması - erişilemiyor) ──────────────────────────────────────
@@ -268,7 +300,8 @@ export async function GET(request: Request) {
   }
 
   // Gerçek verileri paralel çek
-  const [sokRes, migrosRes, happyRes, bizimRes] = await Promise.allSettled([
+  const [a101Res, sokRes, migrosRes, happyRes, bizimRes] = await Promise.allSettled([
+    scrapeA101(query),
     scrapeSOK(query),
     scrapeMigros(query),
     scrapeHappy(query),
@@ -278,7 +311,7 @@ export async function GET(request: Request) {
   const results: ProductResult[] = [];
 
   // Başarılı sonuçları topla
-  [sokRes, migrosRes, happyRes, bizimRes].forEach((r) => {
+  [a101Res, sokRes, migrosRes, happyRes, bizimRes].forEach((r) => {
     if (r.status === 'fulfilled' && r.value?.available) {
       results.push(r.value);
     }
@@ -290,7 +323,6 @@ export async function GET(request: Request) {
   // Erişilemeyen marketleri sona ekle
   const unavailable: ProductResult[] = [];
   const others = await Promise.all([
-    scrapeA101(query),
     scrapeBIM(query),
     scrapeCarrefour(query)
   ]);
