@@ -52,13 +52,31 @@ export default function Home() {
     setResults([]);
 
     try {
-      const res = await fetch(`/api/prices?q=${encodeURIComponent(product.query)}`);
+      const fakeUrl = `https://a101.com.tr/arama?k=${encodeURIComponent(product.query)}`;
+      const res = await fetch(`/api/scrape?url=${encodeURIComponent(fakeUrl)}`);
       const data = await res.json();
 
       if (!res.ok || data.error) {
         setError(data.error || "Bir hata oluştu.");
       } else {
-        setResults(data.results || []);
+        const mappedResults = (data.products || []).map((p: any, i: number) => {
+          const priceNum = parseFloat(p.price.replace(/[^\d,.-]/g, '').replace(',', '.'));
+          return {
+            marketId: `a101-${i}`,
+            marketName: 'A101',
+            marketColor: '#00AEEF',
+            price: isNaN(priceNum) ? 0 : priceNum,
+            priceText: p.price,
+            productName: p.name,
+            productUrl: fakeUrl,
+            available: true
+          };
+        });
+        
+        // Ucuzdan pahalıya sırala
+        mappedResults.sort((a: any, b: any) => a.price - b.price);
+
+        setResults(mappedResults);
       }
     } catch (e) {
       setError("Sunucuya bağlanılamadı. Lütfen tekrar deneyin.");

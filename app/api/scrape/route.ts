@@ -1,9 +1,4 @@
 import { NextResponse } from 'next/server';
-import puppeteer from 'puppeteer-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-
-// Stealth eklentisini kullan
-puppeteer.use(StealthPlugin());
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -13,37 +8,60 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'url parametresi zorunludur.' }, { status: 400 });
   }
 
-  let browser;
   try {
-    // Tarayıcıyı başlat
-    browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    let searchKeyword = 'süt';
+    try {
+      const parsedUrl = new URL(targetUrl);
+      if (parsedUrl.searchParams.has('k')) {
+        searchKeyword = parsedUrl.searchParams.get('k');
+      }
+    } catch (e) {}
+
+    const payload = {
+      "query": searchKeyword,
+      "filter": [],
+      "sort": [],
+      "page_number": 1,
+      "row_per_page": 20,
+      "location": "VS032-SLOT"
+    };
+
+    const encodedPayload = encodeURIComponent(JSON.stringify(payload));
+    const apiUrl = `https://a101-main-prod.wawlabs.com/combined_api_v2?json_data=${encodedPayload}`;
+
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
     });
 
-    const page = await browser.newPage();
-    
-    // Rastgelelik katmak için standart bir çözünürlük
-    await page.setViewport({ width: 1366, height: 768 });
+    if (!response.ok) {
+      throw new Error('A101 API reddetti');
+    }
 
-    // İstenilen URL'ye git
-    await page.goto(targetUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
+    const data = await response.json();
+    const productsData: any[] = [];
 
-    // Sayfanın başlığını al
-    const title = await page.title();
+    if (data?.kapida?.products) {
+      data.kapida.products.forEach((item: any) => {
+        productsData.push({
+          name: item.title,
+          price: item.price.toString() + " TL",
+          image: null
+        });
+      });
+    }
 
     return NextResponse.json({ 
       success: true, 
       url: targetUrl, 
-      title: title 
+      products: productsData,
+      count: productsData.length
     });
-    
+
   } catch (error: any) {
-    console.error('Scrape hatası:', error.message);
     return NextResponse.json({ error: error.message }, { status: 500 });
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
   }
 }
